@@ -11,13 +11,8 @@ import "./App.css";
 function App() {
   return (
     <div>
-      <Router>
-        <Routes>
-          {/* <Route exact path='/' element={<Login />} /> */}
-          <Route exact path='/' element={<Signup />} />
-          <Route exact path='/dashboard' element={<Main />} />
-        </Routes>
-      </Router>    </div>
+      <Main />
+    </div>
   );
 }
 
