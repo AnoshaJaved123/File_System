@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
 import img2 from './styles/doc.png'
 
 const File = () => {
     const [name, setName] = useState([]);
     const [picURL, setpicURL] = useState('');
     const [showpreview, setshowpreview] = useState({ key: "", status: false })
-    const navigate = useNavigate()
 
     const [item, setItem] = useState(null);
     useEffect(() => {
@@ -49,8 +47,7 @@ const File = () => {
     }
     const handlepreview = (id) => {
         console.log(id)
-        setshowpreview({ key: id, status: true })
-        navigate('/preview', { state: id })
+
     }
 
 
