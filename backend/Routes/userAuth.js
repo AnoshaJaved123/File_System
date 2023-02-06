@@ -1,24 +1,30 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
-const User = require('../Model/User')
-const { body, validationResult } = require('express-validator');
-var bcrypt = require('bcryptjs')
+const User = require('../Model/User');
+var bcrypt = require('bcryptjs');
 var jwt = require("jsonwebtoken");
 
-// const { name, email, password,role } = req.body;
+router.get('/fetchuser', async (req, res) => {
+    try {
+        const user = await User.find({});
+        res.json(user)
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Internal Server Error");
+    }
+});
 
-//Route 1: Create user 
-router.post('/createuser',
-    [
-        body("name", "Enter a valid Email").isLength({ min: 3 }),
-        body("email", "Enter a valid Email").isEmail(),
-        body("password", "Enter a valid password").isLength({ min: 5 }),
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+
+router.post("/createuser",
+    async (req, res) => {        //check whether the user  with this email exist already
+        // console.log(req.headers)
+
+
+        console.log(req.body.namedata)
+        console.log(req.body.email)
+        console.log(req.body.password)
+
+
 
         try {
             let user = await User.findOne({ email: req.body.email });
@@ -26,127 +32,95 @@ router.post('/createuser',
                 console.log(user);
                 return res
                     .status(400)
-                    .json({ error: 'email id already exists ' });
+                    .json({ error: "sorry user with this email already exist " });
             }
+
+            //secure pasword using bycrypt
 
             const salt = await bcrypt.genSaltSync(10);
             const secpass = await bcrypt.hash(req.body.password, salt);
 
+            //create a new user
             user = await User.create({
-                name: req.body.name,
+                name: req.body.namedata,
                 email: req.body.email,
-                role: req.body.role,
                 password: secpass,
+            });
 
-            })
-            // res.json(user)
-
-            const JWT_SEC = "This Project belongs to $Anosha";
+            /////////jasonwebtoken///////////
+            const JWT_SEC = "This project belongs to $AnoshaJaved"; //token string
+            // use id as a token
             const data = {
                 user: {
                     id: user.id,
-                }
-            }
-            const authtoken = jwt.sign(data, JWT_SEC)
-            res.json(authtoken)
-        } catch (error) {
-            console.log(error.message);
-            return res.status(500).json("internal server error")
+                },
+            };
+
+            const authtoken = jwt.sign(data, JWT_SEC);
+            res.json(authtoken);
         }
-    })
-
-
-
-// Route 2: Authenticate user
-router.post('/login',
-    [body('email', 'enter valid email').isEmail(),
-    body('password', 'password cannot be blank').exists()
-    ],
-    async (req, res) => {
-        let success = false;
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() })
-        }
-        const { email, password } = req.body;
-        try {
-            //for email confirmation
-            let user = await User.findOne({ email });
-            if (!user) {
-                success = false;
-                return res.status(400).json({ error: "Please try to login with correct credentials" })
-            }
-            //for password confirmation
-            const passwordCompare = await bcrypt.compare(password, user.password)
-            if (!passwordCompare) {
-                success = false;
-                return res.status(400).json({ error: "Please try to login with correct password" })
-            }
-
-            const data = {
-                user: {
-                    id: user.id,
-                    name: user.name,
-                }
-            }
-
-            const JWT_SEC = "This Project belongs to $Anosha";
-            const authtoken = jwt.sign(data, JWT_SEC)
-            success = true
-
-            res.json({ user, authtoken, success })
-
-        } catch (error) {
-            console.log(error.message);
-            return res.status(500).json("internal server error")
+        catch (error) {
+            console.error(error.message);
+            res.status(500).send("Internal Server Error");
         }
 
-        router.route('/fetchuserid/:id').get(function (req, res) {
-            let id = req.params.id
-            User.findById(id, function (err, user) {
-                res.json(user)
-            })
-        })
-
-    }
-
-)
-
-////
-
-router.get('/fectchuser',
-    async (req, res) => {
-        try {
-            const getuser = await User.find({})
-            res.json(getuser)
-        } catch (error) {
-            console.log(error.message)
-            return res.status(500).json("internal server error")
-
-        }
 
     })
 
 
 
-/// fetch user by id
-router.get('/fetchuserid/:id',
-    async (req, res) => {
-        try {
-            const getUserbyid = await User.findById(req.params.id)
-            if (!getUserbyid) {
-                return res.status(400).json("not found")
-            }
-            res.json(getUserbyid)
 
-        } catch (error) {
-            console.log(error.message)
-            return res.status(500).json('internal server error')
+
+// ROUTE 2: Authenticate a User using: POST "/api/auth/login". No login required
+
+
+router.post('/login', async (req, res) => {
+    let success = false;
+    // If there are errors, return Bad request and the errors
+
+
+    const { email, password } = req.body;
+    try {
+        let user = await User.findOne({ email });
+        if (!user) {
+            success = false;
+            return res.status(400).json({ error: "Please try to login with correct credentials" });
         }
+
+        const paswordCompare = await bcrypt.compare(password, user.password);
+        if (!paswordCompare) {
+            success = false
+            return res.status(400).json({ success, error: "Please try to login with correct credentials" });
+        }
+
+        const data = {
+            user: {
+                id: user.id
+            }
+        }
+        const JWT_SEC = "This project belongs to $AnoshaJaved";
+        const authtoken = jwt.sign(data, JWT_SEC);
+        success = true;
+        res.json({ success, authtoken })
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Internal Server Error");
     }
-)
+    // To Get user Details By user ID
+    router.route('/fetchuserid/:id').get(function (req, res) {
+        let id = req.params.id;
+        User.findById(id, function (err, user) {
+            res.json(user);
+        });
+    });
 
 
+})
 
 
 module.exports = router;
+
+
+
+
