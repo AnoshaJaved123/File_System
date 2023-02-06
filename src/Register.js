@@ -43,7 +43,7 @@ const Register = () => {
                     <input value={email} onChange={(e) => { setemail(e.target.value) }} type="email" placeholder="Email" id="email" />
                     <input value={password} onChange={(e) => { setPasword(e.target.value) }} type="password" placeholder="Password" id="pass" autoComplete="off" />
                     <button type="submit" onClick={handleSubmit}>SIGN UP</button>
-                    <p className="message"><a href={'/login'}>Already have account Login?</a></p>
+                    <p className="message"><a href={'/'}>Already have account Login?</a></p>
                 </form>
             </div>
         </div>
